@@ -30,8 +30,7 @@
   const userStore = useUserStore();
 
   const params = ref({
-    pageSize: 5,
-    name: 'xiaoMa',
+    pageSize: 10,
   });
 
   const columns = [

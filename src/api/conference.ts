@@ -13,3 +13,15 @@ export function showConference(id) {
     method: 'GET',
   });
 }
+
+export function listConferencesOfReviewer() {
+  return http.request(
+    {
+      url: '/referees/conferences',
+      method: 'GET',
+    },
+    {
+      withToken: true,
+    }
+  );
+}

@@ -45,10 +45,22 @@ export function listContributionsOfContributor() {
   );
 }
 
-export function listContributionsOfConference(id) {
+// export function listContributionsOfConference(id) {
+//   return http.request(
+//     {
+//       url: '/contributions/conference/' + id,
+//       method: 'GET',
+//     },
+//     {
+//       withToken: true,
+//     }
+//   );
+// }
+
+export function listContributionsforReviewer() {
   return http.request(
     {
-      url: '/contributions/conference/' + id,
+      url: '/referees/contributions',
       method: 'GET',
     },
     {

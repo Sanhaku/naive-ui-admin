@@ -10,7 +10,7 @@
       :scroll-x="1090"
     >
       <template #tableTitle>
-        <h1>会议列表</h1>
+        <h1>稿件列表</h1>
       </template>
     </BasicTable>
   </n-card>
@@ -18,15 +18,18 @@
 
 <script lang="ts" setup>
   import { h, reactive, ref } from 'vue';
-  import { useMessage } from 'naive-ui';
+  import { useMessage, NTag } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { useRouter } from 'vue-router';
-  import { listAllConferences } from '@/api/conference';
-  import { formatDate, FormatsEnums } from '@/utils/dateUtil';
+  import { listContributionsforReviewer } from '@/api/contribution';
 
   const router = useRouter();
   const message = useMessage();
   const actionRef = ref();
+
+  const params = ref({
+    pageSize: 10,
+  });
 
   const columns = [
     {
@@ -35,37 +38,70 @@
       width: 100,
     },
     {
-      title: '会议名称',
-      key: 'name',
-      width: 200,
-    },
-    {
-      title: '地点',
-      key: 'location',
+      title: '投稿会议',
+      key: 'conferenceId',
       width: 100,
     },
     {
-      title: '开始日期',
-      key: 'startDate',
+      title: '标题',
+      key: 'title',
+      width: 200,
+    },
+    {
+      title: '更新日期',
+      key: 'updateDate',
       width: 160,
+    },
+    {
+      title: '状态',
+      key: 'status',
+      width: 100,
       render(row) {
-        return formatDate(row.startDate, FormatsEnums.YMD);
+        return h(
+          NTag,
+          {
+            type: getStatusColor(row.status),
+          },
+          {
+            default: () => {
+              switch (row.status) {
+                case -1:
+                  return '待审核';
+                case 1:
+                  return 'Accepted';
+                case 2:
+                  return 'Rejected';
+                case 3:
+                  return '已撤回';
+                case 4:
+                  return '需要修改';
+                default:
+                  return '审核中';
+              }
+            },
+          }
+        );
       },
     },
     {
-      title: '结束日期',
-      key: 'endDate',
-      width: 160,
-      render(row) {
-        return formatDate(row.endDate, FormatsEnums.YMD);
-      },
-    },
-    {
-      title: '会议链接',
-      key: 'url',
+      title: '审稿意见',
+      key: 'comment',
       width: 200,
     },
   ];
+
+  function getStatusColor(status: number) {
+    switch (status) {
+      case 1:
+        return 'success';
+      case 2:
+        return 'error';
+      case 2:
+        return 'info';
+      default:
+        return 'warning';
+    }
+  }
 
   const actionColumn = reactive({
     width: 100,
@@ -77,7 +113,7 @@
         style: 'button',
         actions: [
           {
-            label: '查看详情',
+            label: '审阅',
             onClick: handleOpen.bind(null, record),
           },
         ],
@@ -87,11 +123,9 @@
       });
     },
   });
-  const params = reactive({
-    pageSize: 10,
-  });
+
   const loadDataTable = async (res) => {
-    const list = await listAllConferences();
+    const list = await listContributionsforReviewer();
     return { list, ...params, ...res };
   };
 
@@ -100,7 +134,7 @@
   }
 
   function handleOpen(record: Recordable) {
-    router.push({ name: 'conference_index', params: { id: record.id } });
+    router.push({ name: 'contribution_review', params: { id: record.id } });
   }
 </script>
 

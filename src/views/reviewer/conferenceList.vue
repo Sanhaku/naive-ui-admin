@@ -21,7 +21,7 @@
   import { useMessage } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { useRouter } from 'vue-router';
-  import { listAllConferences } from '@/api/conference';
+  import { listConferencesOfReviewer } from '@/api/conference';
   import { formatDate, FormatsEnums } from '@/utils/dateUtil';
 
   const router = useRouter();
@@ -81,9 +81,6 @@
             onClick: handleOpen.bind(null, record),
           },
         ],
-        select: (key) => {
-          message.info(`您点击了，${key} 按钮`);
-        },
       });
     },
   });
@@ -91,7 +88,7 @@
     pageSize: 10,
   });
   const loadDataTable = async (res) => {
-    const list = await listAllConferences();
+    const list = await listConferencesOfReviewer();
     return { list, ...params, ...res };
   };
 
@@ -100,7 +97,7 @@
   }
 
   function handleOpen(record: Recordable) {
-    router.push({ name: 'conference_index', params: { id: record.id } });
+    router.push({ name: 'conference_detail', params: { id: record.id } });
   }
 </script>
 
