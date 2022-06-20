@@ -1,3 +1,4 @@
+import { TABS_ROUTES } from './../mutation-types';
 import { defineStore } from 'pinia';
 import { createStorage } from '@/utils/Storage';
 import { store } from '@/store';
@@ -112,6 +113,7 @@ export const useUserStore = defineStore({
       this.setUserInfo('');
       storage.remove(ACCESS_TOKEN);
       storage.remove(CURRENT_USER);
+      storage.remove(TABS_ROUTES);
       return Promise.resolve('');
     },
   },
