@@ -1,11 +1,10 @@
 import { defineStore } from 'pinia';
 import { createStorage } from '@/utils/Storage';
 import { store } from '@/store';
-import { ACCESS_TOKEN, CURRENT_USER, IS_LOCKSCREEN } from '@/store/mutation-types';
-import { ResultEnum } from '@/enums/httpEnum';
+import { ACCESS_TOKEN, CURRENT_USER } from '@/store/mutation-types';
 
 const Storage = createStorage({ storage: localStorage });
-import { getUserInfo, login } from '@/api/system/user';
+import { login } from '@/api/user';
 import { storage } from '@/utils/Storage';
 
 export interface IUserState {
@@ -57,46 +56,54 @@ export const useUserStore = defineStore({
     setUserInfo(info) {
       this.info = info;
     },
-    // 登录
-    async login(userInfo) {
+
+    async login(params, permissions) {
       try {
-        const response = await login(userInfo);
-        const { result, code } = response;
-        if (code === ResultEnum.SUCCESS) {
-          const ex = 7 * 24 * 60 * 60 * 1000;
-          storage.set(ACCESS_TOKEN, result.token, ex);
-          storage.set(CURRENT_USER, result, ex);
-          storage.set(IS_LOCKSCREEN, false);
-          this.setToken(result.token);
-          this.setUserInfo(result);
-        }
+        const response = await login(params);
+        storage.set(ACCESS_TOKEN, response.token);
+        storage.set(CURRENT_USER, response.user);
+        this.setUserInfo(response.user);
+        this.setPermissions(permissions);
+        this.setToken(response.token);
+        // const { result, code } = response;
+        // if (code === ResultEnum.SUCCESS) {
+        //   const ex = 7 * 24 * 60 * 60 * 1000;
+        //   storage.set(ACCESS_TOKEN, result.token, ex);
+        //   storage.set(CURRENT_USER, result, ex);
+        //   this.setToken(result.token);
+        //   this.setUserInfo(result);
+        // }
         return Promise.resolve(response);
       } catch (e) {
         return Promise.reject(e);
       }
     },
 
-    // 获取用户信息
     GetInfo() {
       const that = this;
-      return new Promise((resolve, reject) => {
-        getUserInfo()
-          .then((res) => {
-            const result = res;
-            if (result.permissions && result.permissions.length) {
-              const permissionsList = result.permissions;
-              that.setPermissions(permissionsList);
-              that.setUserInfo(result);
-            } else {
-              reject(new Error('getInfo: permissionsList must be a non-null array !'));
-            }
-            that.setAvatar(result.avatar);
-            resolve(res);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      return {
+        info: that.getUserInfo,
+        permissions: that.getPermissions,
+      };
+      // const that = this;
+      // return new Promise((resolve, reject) => {
+      //   getUserInfo()
+      //     .then((res) => {
+      //       const result = res;
+      //       if (result.permissions && result.permissions.length) {
+      //         const permissionsList = result.permissions;
+      //         that.setPermissions(permissionsList);
+      //         that.setUserInfo(result);
+      //       } else {
+      //         reject(new Error('getInfo: permissionsList must be a non-null array !'));
+      //       }
+      //       that.setAvatar(result.avatar);
+      //       resolve(res);
+      //     })
+      //     .catch((error) => {
+      //       reject(error);
+      //     });
+      // });
     },
 
     // 登出

@@ -8,8 +8,9 @@ import { PageEnum } from '@/enums/pageEnum';
 import { ErrorPageRoute } from '@/router/base';
 
 const LOGIN_PATH = PageEnum.BASE_LOGIN;
+const REGISTER_PATH = PageEnum.BASE_REGISTER;
 
-const whitePathList = [LOGIN_PATH]; // no redirect whitelist
+const whitePathList = [LOGIN_PATH, REGISTER_PATH]; // no redirect whitelist
 
 export function createRouterGuards(router: Router) {
   const userStore = useUserStoreWidthOut();
@@ -56,7 +57,7 @@ export function createRouterGuards(router: Router) {
       return;
     }
 
-    const userInfo = await userStore.GetInfo();
+    const userInfo = userStore.GetInfo();
 
     const routes = await asyncRouteStore.generateRoutes(userInfo);
 

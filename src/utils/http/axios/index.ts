@@ -41,6 +41,8 @@ const transform: AxiosTransform = {
       isReturnNativeResponse,
     } = options;
 
+    console.log('transformRequestData', res);
+
     // 是否返回原生响应头 比如：需要获取响应头时使用该属性
     if (isReturnNativeResponse) {
       return res;
@@ -48,10 +50,11 @@ const transform: AxiosTransform = {
     // 不进行任何处理，直接返回
     // 用于页面代码可能需要直接获取code，data，message这些信息时开启
     if (!isTransformResponse) {
-      return res.data;
+      return res;
     }
 
     const { data } = res;
+    const code = res.status;
 
     const $dialog = window['$dialog'];
     const $message = window['$message'];
@@ -61,62 +64,46 @@ const transform: AxiosTransform = {
       throw new Error('请求出错，请稍候重试');
     }
     //  这里 code，result，message为 后台统一的字段，需要修改为项目自己的接口返回格式
-    const { code, result, message } = data;
-    // 请求成功
-    const hasSuccess = data && Reflect.has(data, 'code') && code === ResultEnum.SUCCESS;
-    // 是否显示提示信息
-    if (isShowMessage) {
-      if (hasSuccess && (successMessageText || isShowSuccessMessage)) {
-        // 是否显示自定义信息提示
-        $dialog.success({
-          type: 'success',
-          content: successMessageText || message || '操作成功！',
-        });
-      } else if (!hasSuccess && (errorMessageText || isShowErrorMessage)) {
-        // 是否显示自定义信息提示
-        $message.error(message || errorMessageText || '操作失败！');
-      } else if (!hasSuccess && options.errorMessageMode === 'modal') {
-        // errorMessageMode=‘custom-modal’的时候会显示modal错误弹窗，而不是消息提示，用于一些比较重要的错误
-        $dialog.info({
-          title: '提示',
-          content: message,
-          positiveText: '确定',
-          onPositiveClick: () => {},
-        });
-      }
-    }
+    // const { code, result, message } = data;
+    // // 请求成功
+    // const hasSuccess = data && Reflect.has(data, 'code') && code === ResultEnum.SUCCESS;
+    // // 是否显示提示信息
+    // if (isShowMessage) {
+    //   if (hasSuccess && (successMessageText || isShowSuccessMessage)) {
+    //     // 是否显示自定义信息提示
+    //     $dialog.success({
+    //       type: 'success',
+    //       content: successMessageText || message || '操作成功！',
+    //     });
+    //   } else if (!hasSuccess && (errorMessageText || isShowErrorMessage)) {
+    //     // 是否显示自定义信息提示
+    //     $message.error(message || errorMessageText || '操作失败！');
+    //   } else if (!hasSuccess && options.errorMessageMode === 'modal') {
+    //     // errorMessageMode=‘custom-modal’的时候会显示modal错误弹窗，而不是消息提示，用于一些比较重要的错误
+    //     $dialog.info({
+    //       title: '提示',
+    //       content: message,
+    //       positiveText: '确定',
+    //       onPositiveClick: () => {},
+    //     });
+    //   }
+    // }
 
     // 接口请求成功，直接返回结果
     if (code === ResultEnum.SUCCESS) {
-      return result;
+      return data;
     }
     // 接口请求错误，统一提示错误信息 这里逻辑可以根据项目进行修改
-    let errorMsg = message;
+    let errorMsg = '';
     switch (code) {
       // 请求失败
-      case ResultEnum.ERROR:
+      case 406:
+        errorMsg = '邮箱已存在';
         $message.error(errorMsg);
         break;
-      // 登录超时
-      case ResultEnum.TIMEOUT:
-        const LoginName = PageEnum.BASE_LOGIN_NAME;
-        const LoginPath = PageEnum.BASE_LOGIN;
-        if (router.currentRoute.value?.name === LoginName) return;
-        // 到登录页
-        errorMsg = '登录超时，请重新登录!';
-        $dialog.warning({
-          title: '提示',
-          content: '登录身份已失效，请重新登录!',
-          positiveText: '确定',
-          //negativeText: '取消',
-          closable: false,
-          maskClosable: false,
-          onPositiveClick: () => {
-            storage.clear();
-            window.location.href = LoginPath;
-          },
-          onNegativeClick: () => {},
-        });
+      case 400:
+        errorMsg = '数据格式错误';
+        $message.error(errorMsg);
         break;
     }
     throw new Error(errorMsg);
@@ -180,7 +167,7 @@ const transform: AxiosTransform = {
     const token = userStore.getToken;
     if (token && (config as Recordable)?.requestOptions?.withToken !== false) {
       // jwt token
-      (config as Recordable).headers.Authorization = options.authenticationScheme
+      (config as Recordable).headers.token = options.authenticationScheme
         ? `${options.authenticationScheme} ${token}`
         : token;
     }
@@ -193,41 +180,43 @@ const transform: AxiosTransform = {
   responseInterceptorsCatch: (error: any) => {
     const $dialog = window['$dialog'];
     const $message = window['$message'];
-    const { response, code, message } = error || {};
+    const { response, message } = error || {};
     // TODO 此处要根据后端接口返回格式修改
-    const msg: string =
-      response && response.data && response.data.message ? response.data.message : '';
-    const err: string = error.toString();
-    try {
-      if (code === 'ECONNABORTED' && message.indexOf('timeout') !== -1) {
-        $message.error('接口请求超时，请刷新页面重试!');
-        return;
-      }
-      if (err && err.includes('Network Error')) {
-        $dialog.info({
-          title: '网络异常',
-          content: '请检查您的网络连接是否正常',
-          positiveText: '确定',
-          //negativeText: '取消',
-          closable: false,
-          maskClosable: false,
-          onPositiveClick: () => {},
-          onNegativeClick: () => {},
-        });
-        return Promise.reject(error);
-      }
-    } catch (error) {
-      throw new Error(error as any);
-    }
-    // 请求是否被取消
-    const isCancel = axios.isCancel(error);
-    if (!isCancel) {
-      checkStatus(error.response && error.response.status, msg);
-    } else {
-      console.warn(error, '请求被取消！');
-    }
-    //return Promise.reject(error);
-    return Promise.reject(response?.data);
+    $message.error(message);
+    return Promise.reject(response);
+    // const msg: string =
+    //   response && response.data && response.data.message ? response.data.message : '';
+    // const err: string = error.toString();
+    // try {
+    //   if (code === 'ECONNABORTED' && message.indexOf('timeout') !== -1) {
+    //     $message.error('接口请求超时，请刷新页面重试!');
+    //     return;
+    //   }
+    //   if (err && err.includes('Network Error')) {
+    //     $dialog.info({
+    //       title: '网络异常',
+    //       content: '请检查您的网络连接是否正常',
+    //       positiveText: '确定',
+    //       //negativeText: '取消',
+    //       closable: false,
+    //       maskClosable: false,
+    //       onPositiveClick: () => {},
+    //       onNegativeClick: () => {},
+    //     });
+    //     return Promise.reject(error);
+    //   }
+    // } catch (error) {
+    //   throw new Error(error as any);
+    // }
+    // // 请求是否被取消
+    // const isCancel = axios.isCancel(error);
+    // if (!isCancel) {
+    //   checkStatus(error.response && error.response.status, msg);
+    // } else {
+    //   console.warn(error, '请求被取消！');
+    // }
+    // //return Promise.reject(error);
+    // return Promise.reject(response?.data);
   },
 };
 

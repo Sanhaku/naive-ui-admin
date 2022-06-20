@@ -40,7 +40,7 @@
               <n-icon size="18" class="m-auto">
                 <PlusOutlined />
               </n-icon>
-              <span class="upload-title">上传图片</span>
+              <span class="upload-title">上传文件</span>
             </div>
           </n-upload>
         </div>

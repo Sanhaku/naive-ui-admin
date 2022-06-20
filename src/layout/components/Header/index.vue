@@ -6,8 +6,7 @@
       v-if="navMode === 'horizontal' || (navMode === 'horizontal-mix' && mixMenu)"
     >
       <div class="logo" v-if="navMode === 'horizontal'">
-        <img src="~@/assets/images/logo.png" alt="" />
-        <h2 v-show="!collapsed" class="title">NaiveUiAdmin</h2>
+        <n-gradient-text :size="24" type="info"> 会议论文投稿系统 </n-gradient-text>
       </div>
       <AsideMenu
         v-model:collapsed="collapsed"
@@ -69,7 +68,7 @@
       </n-breadcrumb>
     </div>
     <div class="layout-header-right">
-      <div
+      <!-- <div
         class="layout-header-trigger layout-header-trigger-min"
         v-for="item in iconList"
         :key="item.icon.name"
@@ -82,9 +81,9 @@
           </template>
           <span>{{ item.tips }}</span>
         </n-tooltip>
-      </div>
+      </div> -->
       <!--切换全屏-->
-      <div class="layout-header-trigger layout-header-trigger-min">
+      <!-- <div class="layout-header-trigger layout-header-trigger-min">
         <n-tooltip placement="bottom">
           <template #trigger>
             <n-icon size="18">
@@ -93,7 +92,7 @@
           </template>
           <span>全屏</span>
         </n-tooltip>
-      </div>
+      </div> -->
       <!-- 个人中心 -->
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-dropdown trigger="hover" @select="avatarSelect" :options="avatarOptions">
@@ -108,7 +107,7 @@
         </n-dropdown>
       </div>
       <!--设置-->
-      <div class="layout-header-trigger layout-header-trigger-min" @click="openSetting">
+      <!-- <div class="layout-header-trigger layout-header-trigger-min" @click="openSetting">
         <n-tooltip placement="bottom-end">
           <template #trigger>
             <n-icon size="18" style="font-weight: bold">
@@ -117,7 +116,7 @@
           </template>
           <span>项目配置</span>
         </n-tooltip>
-      </div>
+      </div> -->
     </div>
   </div>
   <!--项目配置-->

@@ -24,6 +24,7 @@ const routes: Array<RouteRecordRaw> = [
       title: '设置页面',
       icon: renderIcon(SettingOutlined),
       sort: 5,
+      hidden: true,
     },
     children: [
       {
@@ -33,14 +34,6 @@ const routes: Array<RouteRecordRaw> = [
           title: '个人设置',
         },
         component: () => import('@/views/setting/account/account.vue'),
-      },
-      {
-        path: 'system',
-        name: 'setting-system',
-        meta: {
-          title: '系统设置',
-        },
-        component: () => import('@/views/setting/system/system.vue'),
       },
     ],
   },
