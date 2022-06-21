@@ -18,16 +18,16 @@
 
 <script lang="ts" setup>
   import { h, reactive, ref } from 'vue';
-  import { useMessage, NTag } from 'naive-ui';
+  import { useMessage, NTag, useDialog } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { useRouter } from 'vue-router';
   import { listContributionsOfContributor, UpdateContribution } from '@/api/contribution';
-  import { useUserStore } from '@/store/modules/user';
+  import { formatDate, FormatsEnums } from '@/utils/dateUtil';
 
   const router = useRouter();
   const message = useMessage();
   const actionRef = ref();
-  const userStore = useUserStore();
+  const dialog = useDialog();
 
   const params = ref({
     pageSize: 10,
@@ -53,6 +53,9 @@
       title: '更新日期',
       key: 'updateDate',
       width: 160,
+      render(row) {
+        return formatDate(row.updateDate, FormatsEnums.YMDHIS);
+      },
     },
     {
       title: '状态',
@@ -70,9 +73,9 @@
                 case -1:
                   return '待审核';
                 case 1:
-                  return 'Accepted';
+                  return '通过';
                 case 2:
-                  return 'Rejected';
+                  return '拒绝';
                 case 3:
                   return '已撤回';
                 case 4:
@@ -98,8 +101,8 @@
         return 'success';
       case 2:
         return 'error';
-      case 2:
-        return 'info';
+      case 3:
+        return '';
       default:
         return 'warning';
     }
@@ -150,12 +153,21 @@
     router.push({ name: 'edit_contribution', params: { id: record.id } });
   }
   async function handleDelete(record: Recordable) {
-    let params = record;
-    params.status = 3;
-    const res = await UpdateContribution(params);
-    if (res) {
-      message.success('撤回成功');
-    }
+    dialog.info({
+      title: '提示',
+      content: '你确定要撤回投稿吗？',
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        let params = record;
+        params.status = 3;
+        const res = await UpdateContribution(params);
+        if (res) {
+          message.success('撤回成功');
+        }
+      },
+      onNegativeClick: () => {},
+    });
   }
 </script>
 

@@ -37,18 +37,23 @@
               />
             </n-form-item>
 
-            <n-form-item label="正文" path="img">
-              <BasicUpload
-                :action="`${uploadUrl}/v1.0/files`"
-                :headers="uploadHeaders"
-                :data="{ type: 0 }"
-                name="files"
-                :width="100"
-                :height="100"
-                @uploadChange="uploadChange"
-                v-model:value="uploadList"
-                helpText="文件大小不超过20MB"
-              />
+            <n-form-item label="正文" path="file">
+              <n-upload
+                directory-dnd
+                :action="uploadUrl"
+                :custom-request="customRequest"
+                accept="application/pdf"
+              >
+                <n-upload-dragger>
+                  <div style="margin-bottom: 12px">
+                    <n-icon size="48" :depth="3">
+                      <UploadOutlined />
+                    </n-icon>
+                  </div>
+                  <n-text style="font-size: 16px"> 点击或者拖动文件到该区域来上传 </n-text>
+                  <n-p depth="3" style="margin: 8px 0 0 0"> 上传文件大小不超过10M </n-p>
+                </n-upload-dragger>
+              </n-upload>
             </n-form-item>
             <div style="margin-left: 80px">
               <n-space>
@@ -66,13 +71,13 @@
 <script lang="ts" setup>
   import { ref, unref, reactive } from 'vue';
   import { useRouter } from 'vue-router';
-  import { useMessage } from 'naive-ui';
-  import { BasicUpload } from '@/components/Upload';
-  import { useGlobSetting } from '@/hooks/setting';
+  import { UploadCustomRequestOptions, useMessage } from 'naive-ui';
+  import type { UploadFileInfo, UploadInst } from 'naive-ui';
+  import { UploadOutlined } from '@vicons/antd';
   import { useUserStore } from '@/store/modules/user';
   import { createContribution } from '@/api/contribution';
-
-  const globSetting = useGlobSetting();
+  import { getUploadUrl } from '@/api/oss';
+  import axios from 'axios';
   const router = useRouter();
   const userStore = useUserStore();
   const rules = {
@@ -100,7 +105,6 @@
 
   const formRef: any = ref(null);
   const message = useMessage();
-  const { uploadUrl } = globSetting;
 
   const defaultValueRef = () => ({
     name:
@@ -112,32 +116,121 @@
     conference: router.currentRoute.value.params.name,
     title: '',
     abstract: '',
+    filename: '',
   });
 
   let formValue = reactive(defaultValueRef());
-  const uploadList = ref([
-    'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-  ]);
-  const uploadHeaders = reactive({
-    platform: 'miniPrograms',
-    timestamp: new Date().getTime(),
-    token: 'Q6fFCuhc1vkKn5JNFWaCLf6gRAc5n0LQHd08dSnG4qo=',
-  });
+  let uploadUrl = ref('');
 
-  //TODO 文件上传
+  const fileList = ref(<UploadFileInfo>[]);
+  const uploadRef = ref<UploadInst | null>(null);
+
+  async function beforeUpload({ file }) {
+    const fileInfo = file.file;
+    const fileType = ['application/pdf'];
+    const maxSize = 10;
+    // 设置最大值，则判断
+    if (maxSize && fileInfo.size / 1024 / 1024 >= maxSize) {
+      message.error(`上传文件最大值不能超过${maxSize}M`);
+      return false;
+    }
+    // 设置类型,则判断
+    if (!fileType.includes(fileInfo.type)) {
+      message.error('只能上传pdf格式的文件');
+      return false;
+    }
+    const res = await getUploadUrl({ filename: file.name });
+    console.log(res);
+    if (res) {
+      formValue.filename = res.filename;
+      // uploadUrl.value = '/upload' + res.url.slice(42);
+      uploadUrl.value = res.url;
+      const copyFile = new File([file.file], res.filename);
+      const newFileInfo = file;
+      newFileInfo.file = copyFile;
+      // fileList.value[0].file = copyFile;
+      console.log(newFileInfo);
+      // handleUploadFile();
+      return true;
+    }
+    message.error('上传失败，请稍后再试');
+    return false;
+  }
+
+  function finish({ event: Event }) {
+    const res = eval('(' + Event.target.response + ')');
+    console.log('finish ', res);
+  }
+
+  const handleChange = (data: { fileList: UploadFileInfo[] }) => {
+    fileList.value = data.fileList;
+    console.log('change', fileList.value);
+  };
+  // const handleUploadFile = () => {
+  //   uploadRef.value?.submit();
+  // };
+
+  const customRequest = async ({
+    file,
+    data,
+    headers,
+    withCredentials,
+    action,
+    onFinish,
+    onError,
+    onProgress,
+  }: UploadCustomRequestOptions) => {
+    const res = await getUploadUrl({ filename: file.name });
+    console.log(res);
+    if (res) {
+      const filename = res.filename;
+      const url = res.url;
+      formValue.filename = filename
+      uploadUrl.value = url;
+      const copyFile = new File([file.file], filename);
+      // const newFileInfo = file;
+      // newFileInfo.file = copyFile;
+
+      let formData = new FormData();
+      // if (data) {
+      //   Object.keys(data).forEach((key) => {
+      //     formData.append(key, data[key as keyof UploadCustomRequestOptions['data']]);
+      //   });
+      // }
+      formData.append('file', copyFile);
+      console.log(formData);
+      axios
+        .put(url as string, {
+          body: formData,
+          onUploadProgress: ({ percent }) => {
+            onProgress({ percent: Math.ceil(percent) });
+          },
+        })
+        .then((response) => {
+          message.success(response);
+          onFinish();
+        })
+        .catch((error) => {
+          message.success(error.message);
+          onError();
+        });
+    }
+  };
+
   function formSubmit() {
     formRef.value.validate(async (errors) => {
       if (!errors) {
-        const { title, abstract } = formValue;
+        const { title, abstract, filename } = formValue;
         const params = {
           title,
           abstract,
           conferenceId: router.currentRoute.value.params.id,
-          fileName,
+          filename,
         };
         const res = await createContribution(params);
         if (res) {
           message.success('提交成功');
+          router.push({ name: 'my_contribution_list' });
         }
       } else {
         message.error('请填写完整信息');
@@ -148,9 +241,5 @@
   function resetForm() {
     formRef.value.restoreValidation();
     formValue = Object.assign(unref(formValue), defaultValueRef());
-  }
-
-  function uploadChange(list: string[]) {
-    console.log(list);
   }
 </script>

@@ -81,9 +81,6 @@
             onClick: handleOpen.bind(null, record),
           },
         ],
-        select: (key) => {
-          message.info(`您点击了，${key} 按钮`);
-        },
       });
     },
   });
