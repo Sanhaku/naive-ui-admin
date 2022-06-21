@@ -22,6 +22,7 @@
   import { BasicTable, TableAction } from '@/components/Table';
   import { useRouter } from 'vue-router';
   import { listContributionsforReviewer } from '@/api/contribution';
+  import { formatDate, FormatsEnums } from '@/utils/dateUtil';
 
   const router = useRouter();
   const message = useMessage();
@@ -45,12 +46,20 @@
     {
       title: '标题',
       key: 'title',
-      width: 200,
+      width: 160,
+    },
+    {
+      title: '文件',
+      key: 'filename',
+      width: 160,
     },
     {
       title: '更新日期',
       key: 'updateDate',
-      width: 160,
+      width: 120,
+      render(row) {
+        return formatDate(row.updateDate, FormatsEnums.YMDHIS);
+      },
     },
     {
       title: '状态',
@@ -68,9 +77,9 @@
                 case -1:
                   return '待审核';
                 case 1:
-                  return 'Accepted';
+                  return '通过';
                 case 2:
-                  return 'Rejected';
+                  return '拒绝';
                 case 3:
                   return '已撤回';
                 case 4:
@@ -86,7 +95,7 @@
     {
       title: '审稿意见',
       key: 'comment',
-      width: 200,
+      width: 160,
     },
   ];
 
@@ -96,8 +105,8 @@
         return 'success';
       case 2:
         return 'error';
-      case 2:
-        return 'info';
+      case 3:
+        return '';
       default:
         return 'warning';
     }
@@ -117,9 +126,6 @@
             onClick: handleOpen.bind(null, record),
           },
         ],
-        select: (key) => {
-          message.info(`您点击了，${key} 按钮`);
-        },
       });
     },
   });

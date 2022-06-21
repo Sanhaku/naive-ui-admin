@@ -21,7 +21,11 @@
   import { useMessage, NTag, useDialog } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { useRouter } from 'vue-router';
-  import { listContributionsOfContributor, UpdateContribution } from '@/api/contribution';
+  import {
+    listContributionsOfContributor,
+    showContribution,
+    UpdateContribution,
+  } from '@/api/contribution';
   import { formatDate, FormatsEnums } from '@/utils/dateUtil';
 
   const router = useRouter();
@@ -47,12 +51,17 @@
     {
       title: '标题',
       key: 'title',
-      width: 200,
+      width: 160,
+    },
+    {
+      title: '文件',
+      key: 'filename',
+      width: 160,
     },
     {
       title: '更新日期',
       key: 'updateDate',
-      width: 160,
+      width: 120,
       render(row) {
         return formatDate(row.updateDate, FormatsEnums.YMDHIS);
       },
@@ -91,7 +100,7 @@
     {
       title: '审稿意见',
       key: 'comment',
-      width: 200,
+      width: 160,
     },
   ];
 
@@ -130,9 +139,6 @@
             onClick: handleDelete.bind(null, record),
           },
         ],
-        select: (key) => {
-          message.info(`您点击了，${key} 按钮`);
-        },
       });
     },
   });
@@ -159,7 +165,7 @@
       positiveText: '确定',
       negativeText: '取消',
       onPositiveClick: async () => {
-        let params = record;
+        let params = await showContribution(record.id);
         params.status = 3;
         const res = await UpdateContribution(params);
         if (res) {

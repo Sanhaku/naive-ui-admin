@@ -185,7 +185,7 @@
     if (res) {
       const filename = res.filename;
       const url = res.url;
-      formValue.filename = filename
+      formValue.filename = filename;
       uploadUrl.value = url;
       const copyFile = new File([file.file], filename);
       // const newFileInfo = file;
@@ -198,10 +198,9 @@
       //   });
       // }
       formData.append('file', copyFile);
-      console.log(formData);
+      console.log('formdata', formData.get('file'));
       axios
-        .put(url as string, {
-          body: formData,
+        .put(url as string, formData, {
           onUploadProgress: ({ percent }) => {
             onProgress({ percent: Math.ceil(percent) });
           },
