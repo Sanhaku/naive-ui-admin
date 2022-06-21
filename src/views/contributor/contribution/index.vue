@@ -28,7 +28,7 @@
           {{ contribution.abstract }}
         </n-descriptions-item>
         <n-descriptions-item label="正文"
-          ><a>{{ contribution.filename }}</a></n-descriptions-item
+          ><a :href="url">{{ contribution.filename }}</a></n-descriptions-item
         >
       </n-descriptions>
     </n-card>
@@ -51,6 +51,7 @@
   import { onMounted, reactive, ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { formatDate, FormatsEnums } from '@/utils/dateUtil';
+  import { getDownloadUrl } from '@/api/oss';
 
   const router = useRouter();
 
@@ -85,11 +86,15 @@
   }
   const contribution = reactive(new Contribution());
   let conferenceName = ref('');
+  let url = ref('');
+
   onMounted(async () => {
     const data = await showContribution(router.currentRoute.value.params.id);
     contribution.set(data);
     const { name } = await showConference(contribution.conferenceId);
     conferenceName.value = name;
+    const res = await getDownloadUrl({ filename: contribution.filename });
+    url.value = res.url;
   });
 </script>
 

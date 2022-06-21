@@ -31,12 +31,9 @@
             <n-form-item label="正文" path="img">
               <n-upload
                 directory-dnd
-                :action="uploadUrl"
-                method="PUT"
-                :headers="headers"
+                action=""
                 accept="application/pdf"
-                @before-upload="beforeUpload"
-                @finish="finish"
+                :custom-request="customRequest"
               >
                 <n-upload-dragger>
                   <div style="margin-bottom: 12px">
@@ -65,7 +62,7 @@
 <script lang="ts" setup>
   import { ref, unref, reactive, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
-  import { useMessage } from 'naive-ui';
+  import { UploadCustomRequestOptions, useMessage } from 'naive-ui';
   import { UploadOutlined } from '@vicons/antd';
   import { useUserStore } from '@/store/modules/user';
   import { showContribution, UpdateContribution } from '@/api/contribution';
@@ -113,40 +110,27 @@
   });
 
   let formValue = reactive(defaultValueRef());
-  let uploadUrl = ref('');
-  const headers = { token: userStore.getToken };
 
-  async function beforeUpload({ file, fileList }) {
-    const fileInfo = file.file;
-    const fileType = ['application/pdf'];
-    const maxSize = 10;
-    // 设置最大值，则判断
-    if (maxSize && fileInfo.size / 1024 / 1024 >= maxSize) {
-      message.error(`上传文件最大值不能超过${maxSize}M`);
-      return false;
-    }
-    // 设置类型,则判断
-    if (!fileType.includes(fileInfo.type)) {
-      message.error('只能上传pdf格式的文件');
-      return false;
-    }
+  const customRequest = async ({ file }: UploadCustomRequestOptions) => {
     const res = await getUploadUrl({ filename: file.name });
     console.log(res);
     if (res) {
-      formValue.filename = res.filename;
-      // uploadUrl.value = '/upload' + res.url.slice(42);
-      uploadUrl.value = res.url;
-      file.name = res.filename;
-      return true;
+      const filename = res.filename;
+      const url = res.url;
+      formValue.filename = filename;
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', url, true);
+      xhr.onload = function () {
+        alert(`Loaded: ${xhr.status} ${xhr.response}`);
+        if (xhr.status == 200) {
+          message.success('上传成功');
+        } else {
+          message.error('上传失败，请重新尝试');
+        }
+      };
+      xhr.send(file.file);
     }
-    message.error('上传失败，请稍后再试');
-    return false;
-  }
-
-  function finish({ event: Event }) {
-    const res = eval('(' + Event.target.response + ')');
-    console.log('finish: ', res);
-  }
+  };
 
   onMounted(async () => {
     const data = await showContribution(router.currentRoute.value.params.id);
@@ -169,7 +153,7 @@
         const res = await UpdateContribution(params);
         if (res) {
           message.success('修改成功');
-          router.push({ name: 'my_contribution_list' });
+          router.replace({ name: 'my_contribution_list' });
         }
       } else {
         message.error('请填写完整信息');

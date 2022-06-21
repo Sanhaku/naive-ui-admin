@@ -72,12 +72,10 @@
   import { ref, unref, reactive } from 'vue';
   import { useRouter } from 'vue-router';
   import { UploadCustomRequestOptions, useMessage } from 'naive-ui';
-  import type { UploadFileInfo, UploadInst } from 'naive-ui';
   import { UploadOutlined } from '@vicons/antd';
   import { useUserStore } from '@/store/modules/user';
   import { createContribution } from '@/api/contribution';
   import { getUploadUrl } from '@/api/oss';
-  import axios from 'axios';
   const router = useRouter();
   const userStore = useUserStore();
   const rules = {
@@ -122,53 +120,37 @@
   let formValue = reactive(defaultValueRef());
   let uploadUrl = ref('');
 
-  const fileList = ref(<UploadFileInfo>[]);
-  const uploadRef = ref<UploadInst | null>(null);
-
-  async function beforeUpload({ file }) {
-    const fileInfo = file.file;
-    const fileType = ['application/pdf'];
-    const maxSize = 10;
-    // 设置最大值，则判断
-    if (maxSize && fileInfo.size / 1024 / 1024 >= maxSize) {
-      message.error(`上传文件最大值不能超过${maxSize}M`);
-      return false;
-    }
-    // 设置类型,则判断
-    if (!fileType.includes(fileInfo.type)) {
-      message.error('只能上传pdf格式的文件');
-      return false;
-    }
-    const res = await getUploadUrl({ filename: file.name });
-    console.log(res);
-    if (res) {
-      formValue.filename = res.filename;
-      // uploadUrl.value = '/upload' + res.url.slice(42);
-      uploadUrl.value = res.url;
-      const copyFile = new File([file.file], res.filename);
-      const newFileInfo = file;
-      newFileInfo.file = copyFile;
-      // fileList.value[0].file = copyFile;
-      console.log(newFileInfo);
-      // handleUploadFile();
-      return true;
-    }
-    message.error('上传失败，请稍后再试');
-    return false;
-  }
-
-  function finish({ event: Event }) {
-    const res = eval('(' + Event.target.response + ')');
-    console.log('finish ', res);
-  }
-
-  const handleChange = (data: { fileList: UploadFileInfo[] }) => {
-    fileList.value = data.fileList;
-    console.log('change', fileList.value);
-  };
-  // const handleUploadFile = () => {
-  //   uploadRef.value?.submit();
-  // };
+  // async function beforeUpload({ file }) {
+  //   const fileInfo = file.file;
+  //   const fileType = ['application/pdf'];
+  //   const maxSize = 10;
+  //   // 设置最大值，则判断
+  //   if (maxSize && fileInfo.size / 1024 / 1024 >= maxSize) {
+  //     message.error(`上传文件最大值不能超过${maxSize}M`);
+  //     return false;
+  //   }
+  //   // 设置类型,则判断
+  //   if (!fileType.includes(fileInfo.type)) {
+  //     message.error('只能上传pdf格式的文件');
+  //     return false;
+  //   }
+  //   const res = await getUploadUrl({ filename: file.name });
+  //   console.log(res);
+  //   if (res) {
+  //     formValue.filename = res.filename;
+  //     // uploadUrl.value = '/upload' + res.url.slice(42);
+  //     uploadUrl.value = res.url;
+  //     const copyFile = new File([file.file], res.filename);
+  //     const newFileInfo = file;
+  //     newFileInfo.file = copyFile;
+  //     // fileList.value[0].file = copyFile;
+  //     console.log(newFileInfo);
+  //     // handleUploadFile();
+  //     return true;
+  //   }
+  //   message.error('上传失败，请稍后再试');
+  //   return false;
+  // }
 
   const customRequest = async ({
     file,
@@ -187,32 +169,39 @@
       const url = res.url;
       formValue.filename = filename;
       uploadUrl.value = url;
-      const copyFile = new File([file.file], filename);
-      // const newFileInfo = file;
-      // newFileInfo.file = copyFile;
 
-      let formData = new FormData();
-      // if (data) {
-      //   Object.keys(data).forEach((key) => {
-      //     formData.append(key, data[key as keyof UploadCustomRequestOptions['data']]);
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', url, true);
+      xhr.onload = function () {
+        alert(`Loaded: ${xhr.status} ${xhr.response}`);
+        if (xhr.status == 200) {
+          message.success('上传成功');
+        } else {
+          message.error('上传失败，请重新尝试');
+        }
+      };
+      // xhr.onprogress = function ({ percent }) {
+      //   onProgress({ percent: Math.ceil(percent) });
+      // };
+      xhr.send(file.file);
+
+      // let formData = new FormData();
+      // formData.append('file', copyFile);
+      // console.log('formdata', formData.get('file'));
+      // axios
+      //   .put(url, file.file, {
+      //     onUploadProgress: ({ percent }) => {
+      //       onProgress({ percent: Math.ceil(percent) });
+      //     },
+      //   })
+      //   .then((response) => {
+      //     message.success(response);
+      //     onFinish();
+      //   })
+      //   .catch((error) => {
+      //     message.success(error.message);
+      //     onError();
       //   });
-      // }
-      formData.append('file', copyFile);
-      console.log('formdata', formData.get('file'));
-      axios
-        .put(url as string, formData, {
-          onUploadProgress: ({ percent }) => {
-            onProgress({ percent: Math.ceil(percent) });
-          },
-        })
-        .then((response) => {
-          message.success(response);
-          onFinish();
-        })
-        .catch((error) => {
-          message.success(error.message);
-          onError();
-        });
     }
   };
 
@@ -229,7 +218,7 @@
         const res = await createContribution(params);
         if (res) {
           message.success('提交成功');
-          router.push({ name: 'my_contribution_list' });
+          router.replace({ name: 'my_contribution_list' });
         }
       } else {
         message.error('请填写完整信息');
