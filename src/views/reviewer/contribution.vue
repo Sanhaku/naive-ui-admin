@@ -19,16 +19,11 @@
         <n-descriptions-item label="更新日期">{{
           formatDate(contribution.updateDate, FormatsEnums.YMDHIS)
         }}</n-descriptions-item>
-        <!-- <n-descriptions-item label="状态">
-          <n-tag :type="getStatusColor(contribution.status)">
-            {{ getStatus(contribution.status) }}</n-tag
-          >
-        </n-descriptions-item> -->
         <n-descriptions-item label="摘要">
           {{ contribution.abstract }}
         </n-descriptions-item>
         <n-descriptions-item label="正文"
-          ><a>{{ contribution.filename }}</a></n-descriptions-item
+          ><a :href="url">{{ contribution.filename }}</a></n-descriptions-item
         >
       </n-descriptions>
     </n-card>
@@ -83,38 +78,9 @@
   import { useRouter } from 'vue-router';
   import { formatDate, FormatsEnums } from '@/utils/dateUtil';
   import { useMessage } from 'naive-ui';
+  import { getDownloadUrl } from '@/api/oss';
 
   const router = useRouter();
-
-  function getStatusColor(status: number) {
-    switch (status) {
-      case 1:
-        return 'success';
-      case 2:
-        return 'error';
-      case 3:
-        return '';
-      default:
-        return 'warning';
-    }
-  }
-
-  function getStatus(status) {
-    switch (status) {
-      case -1:
-        return '待审核';
-      case 1:
-        return '通过';
-      case 2:
-        return '拒绝';
-      case 3:
-        return '已撤回';
-      case 4:
-        return '需要修改';
-      default:
-        return '审核中';
-    }
-  }
 
   const results = [
     {
@@ -147,12 +113,16 @@
 
   const contribution = reactive(new Contribution());
   let conferenceName = ref('');
+  let url = ref('');
+
   onMounted(async () => {
     const data = await showContribution(router.currentRoute.value.params.id);
     contribution.set(data);
     const { name } = await showConference(contribution.conferenceId);
     conferenceName.value = name;
     contribution.status = 4;
+    const res = await getDownloadUrl({ filename: contribution.filename });
+    url.value = res.url;
   });
 
   function formSubmit() {
@@ -161,7 +131,7 @@
         const res = await UpdateContribution(contribution);
         if (res) {
           message.success('提交成功');
-          router.push({ name: 'reviewer_contributions' });
+          router.replace({ name: 'reviewer_contributions' });
         }
       } else {
         message.error('请填写完整信息');
@@ -170,7 +140,7 @@
   }
 
   function handleCancel() {
-    router.push({ name: 'reviewer_contributions' });
+    router.replace({ name: 'reviewer_contributions' });
   }
 </script>
 

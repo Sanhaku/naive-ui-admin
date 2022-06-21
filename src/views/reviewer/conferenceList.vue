@@ -18,14 +18,12 @@
 
 <script lang="ts" setup>
   import { h, reactive, ref } from 'vue';
-  import { useMessage } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { useRouter } from 'vue-router';
   import { listConferencesOfReviewer } from '@/api/conference';
   import { formatDate, FormatsEnums } from '@/utils/dateUtil';
 
   const router = useRouter();
-  const message = useMessage();
   const actionRef = ref();
 
   const columns = [
