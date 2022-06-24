@@ -26,7 +26,7 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           title: '投稿记录',
           // hidden: true,
-          keepAlive: true,
+          // keepAlive: true,
           activeMenu: routeName,
         },
         component: () => import('@/views/contributor/contribution/list.vue'),

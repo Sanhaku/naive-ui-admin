@@ -305,7 +305,7 @@
 
       // 在页面关闭或刷新之前，保存数据
       window.addEventListener('beforeunload', () => {
-        storage.set(TABS_ROUTES, JSON.stringify(tabsList.value));
+        // storage.set(TABS_ROUTES, JSON.stringify(tabsList.value));
       });
 
       // 关闭当前页面

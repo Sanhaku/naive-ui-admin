@@ -2,7 +2,7 @@ import { TABS_ROUTES } from './../mutation-types';
 import { defineStore } from 'pinia';
 import { createStorage } from '@/utils/Storage';
 import { store } from '@/store';
-import { ACCESS_TOKEN, CURRENT_USER } from '@/store/mutation-types';
+import { ACCESS_TOKEN, CURRENT_USER, IS_LOCKSCREEN } from '@/store/mutation-types';
 
 const Storage = createStorage({ storage: localStorage });
 import { login } from '@/api/user';
@@ -111,9 +111,11 @@ export const useUserStore = defineStore({
     async logout() {
       this.setPermissions([]);
       this.setUserInfo('');
-      storage.remove(ACCESS_TOKEN);
-      storage.remove(CURRENT_USER);
-      storage.remove(TABS_ROUTES);
+      // storage.remove(ACCESS_TOKEN);
+      // storage.remove(CURRENT_USER);
+      // storage.remove(TABS_ROUTES);
+      // storage.remove(IS_LOCKSCREEN);
+      storage.clear;
       return Promise.resolve('');
     },
   },

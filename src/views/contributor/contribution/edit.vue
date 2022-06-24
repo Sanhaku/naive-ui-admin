@@ -121,7 +121,7 @@
       var xhr = new XMLHttpRequest();
       xhr.open('PUT', url, true);
       xhr.onload = function () {
-        alert(`Loaded: ${xhr.status} ${xhr.response}`);
+        // alert(`Loaded: ${xhr.status} ${xhr.response}`);
         if (xhr.status == 200) {
           message.success('上传成功');
         } else {

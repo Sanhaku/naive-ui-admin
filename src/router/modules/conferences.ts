@@ -27,7 +27,7 @@ const routes: Array<RouteRecordRaw> = [
           title: '会议列表',
           activeMenu: routeName,
           affix: true,
-          keepAlive: true,
+          // keepAlive: true,
           // hidden: true,
         },
         component: () => import('@/views/contributor/conference/list.vue'),

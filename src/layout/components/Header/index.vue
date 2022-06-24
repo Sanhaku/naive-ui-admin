@@ -128,12 +128,11 @@
   import { useRouter, useRoute } from 'vue-router';
   import components from './components';
   import { NDialogProvider, useDialog, useMessage } from 'naive-ui';
-  import { TABS_ROUTES } from '@/store/mutation-types';
   import { useUserStore } from '@/store/modules/user';
-  import { useLockscreenStore } from '@/store/modules/lockscreen';
   import ProjectSetting from './ProjectSetting.vue';
   import { AsideMenu } from '@/layout/components/Menu';
   import { useProjectSetting } from '@/hooks/setting/useProjectSetting';
+  import { storage } from '@/utils/Storage';
 
   export default defineComponent({
     name: 'PageHeader',
@@ -148,13 +147,13 @@
     },
     setup(props) {
       const userStore = useUserStore();
-      const useLockscreen = useLockscreenStore();
+      // const useLockscreen = useLockscreenStore();
       const message = useMessage();
       const dialog = useDialog();
       const { getNavMode, getNavTheme, getHeaderSetting, getMenuSetting, getCrumbsSetting } =
         useProjectSetting();
 
-      const { username } = userStore?.info || {};
+      const username = userStore?.info.lastName || {};
 
       const drawerSetting = ref();
 
@@ -235,13 +234,14 @@
             userStore.logout().then(() => {
               message.success('成功退出登录');
               // 移除标签页
-              localStorage.removeItem(TABS_ROUTES);
+              // localStorage.removeItem(TABS_ROUTES);
+              // storage.clear();
               router
                 .replace({
                   name: 'Login',
-                  query: {
-                    redirect: route.fullPath,
-                  },
+                  // query: {
+                  //   redirect: route.fullPath,
+                  // },
                 })
                 .finally(() => location.reload());
             });
@@ -270,26 +270,26 @@
       };
 
       // 图标列表
-      const iconList = [
-        {
-          icon: 'SearchOutlined',
-          tips: '搜索',
-        },
-        {
-          icon: 'GithubOutlined',
-          tips: 'github',
-          eventObject: {
-            click: () => window.open('https://github.com/jekip/naive-ui-admin'),
-          },
-        },
-        {
-          icon: 'LockOutlined',
-          tips: '锁屏',
-          eventObject: {
-            click: () => useLockscreen.setLock(true),
-          },
-        },
-      ];
+      // const iconList = [
+      //   {
+      //     icon: 'SearchOutlined',
+      //     tips: '搜索',
+      //   },
+      //   {
+      //     icon: 'GithubOutlined',
+      //     tips: 'github',
+      //     eventObject: {
+      //       click: () => window.open('https://github.com/jekip/naive-ui-admin'),
+      //     },
+      //   },
+      //   {
+      //     icon: 'LockOutlined',
+      //     tips: '锁屏',
+      //     eventObject: {
+      //       click: () => useLockscreen.setLock(true),
+      //     },
+      //   },
+      // ];
       const avatarOptions = [
         {
           label: '个人设置',
@@ -320,7 +320,7 @@
 
       return {
         ...toRefs(state),
-        iconList,
+        // iconList,
         toggleFullScreen,
         doLogout,
         route,

@@ -77,13 +77,16 @@ export function createRouterGuards(router: Router) {
     const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect };
     asyncRouteStore.setDynamicAddedRoute(true);
     next(nextData);
+
+
+    console.log(asyncRouteStore.getMenus);
     Loading && Loading.finish();
   });
 
   router.afterEach((to, _, failure) => {
     document.title = (to?.meta?.title as string) || document.title;
     if (isNavigationFailure(failure)) {
-      //console.log('failed navigation', failure)
+      console.log('failed navigation', failure);
     }
     const asyncRouteStore = useAsyncRouteStoreWidthOut();
     // 在这里设置需要缓存的组件名称
